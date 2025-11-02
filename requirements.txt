@@ -30,5 +30,5 @@ mypy==1.13.0
 django-stubs==5.1.1
 
 django-jazzmin
-whitenoise==7.0.1
-psycopg2-binary==2.9.7
+whitenoise
+psycopg2-binary
