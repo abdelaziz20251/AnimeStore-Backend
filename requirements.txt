@@ -29,3 +29,5 @@ ruff==0.8.4
 mypy==1.13.0
 django-stubs==5.1.1
 
+django-jazzmin
+
