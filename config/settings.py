@@ -150,16 +150,26 @@ WSGI_APPLICATION = "config.wsgi.application"
 #   - محلي: SQLite (افتراضي)
 #   - Production: Postgres (Supabase) لو وفّرت DB_* في Railway
 # -----------------------------------------------------------------------------
-if os.getenv("DB_HOST"):  # وجود DB_HOST يعتبر سويتش لاستخدام Postgres
+def str2bool(v: str, default=False) -> bool:
+    if v is None:
+        return default
+    return str(v).lower() in ("true", "1", "yes", "y")
+
+USE_DIRECT = str2bool(os.getenv("USE_DIRECT_DB"), default=False)
+
+if os.getenv("DB_HOST"):
+    DB_HOST = os.getenv("DIRECT_DB_HOST" if USE_DIRECT else "DB_HOST")
+    DB_PORT = os.getenv("DIRECT_DB_PORT" if USE_DIRECT else "DB_PORT", "5432")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("DB_NAME", "postgres"),
             "USER": os.getenv("DB_USER", "postgres"),
             "PASSWORD": os.getenv("DB_PASSWORD", ""),
-            "HOST": os.getenv("DB_HOST", ""),
-            "PORT": os.getenv("DB_PORT", "5432"),
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
             "OPTIONS": {"sslmode": "require"},
+            "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
         }
     }
 else:
