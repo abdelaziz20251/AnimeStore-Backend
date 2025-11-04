@@ -9,9 +9,10 @@ class Migration(migrations.Migration):
 
 
     dependencies = [
-    migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ('products', '0001_initial'),
-]
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('users', '0001_initial'),  # Ensure users table is created first
+        ('products', '0001_initial'),
+    ]
 
     operations = [
         migrations.AddField(
