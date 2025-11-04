@@ -29,6 +29,6 @@ ruff==0.8.4
 mypy==1.13.0
 django-stubs==5.1.1
 
-django-jazzmin
-whitenoise
-psycopg2-binary
+django-jazzmin==3.0.1
+whitenoise==6.6.0
+psycopg2-binary==2.9.9
