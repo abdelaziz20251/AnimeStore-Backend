@@ -47,22 +47,18 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # -----------------------------------------------------------------------------
 INSTALLED_APPS = [
     "jazzmin",
+    "users.apps.UsersConfig",   # لازم ييجي قبل أي app تاني بيعتمد عليه
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
-
-    # Local apps
-    "users.apps.UsersConfig",
     "products.apps.ProductsConfig",
     "orders.apps.OrdersConfig",
     "sellers.apps.SellersConfig",
