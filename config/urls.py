@@ -66,13 +66,21 @@ def api_root(request):
 
 
 def health_check(request):
-    """Health check endpoint for Render.com monitoring."""
-    return JsonResponse({
-        'status': 'healthy',
-        'timestamp': str(timezone.now()),
-        'version': '1.0.0',
-        'service': 'e-commerce-api'
-    })
+    """Health check endpoint for Railway monitoring - no database required."""
+    try:
+        # Simple health check without database dependency
+        return JsonResponse({
+            'status': 'healthy',
+            'timestamp': str(timezone.now()),
+            'version': '1.0.0',
+            'service': 'e-commerce-api'
+        })
+    except Exception as e:
+        # Return error even if timezone fails
+        return JsonResponse({
+            'status': 'degraded',
+            'error': str(e)
+        }, status=500)
 
 urlpatterns = [
     # Root - API Information
