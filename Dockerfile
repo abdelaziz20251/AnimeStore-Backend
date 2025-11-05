@@ -1,18 +1,19 @@
-# Development Dockerfile for Django Backend with SQLite3
+# Production Dockerfile for Railway/Docker deployment
 FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=8000
 
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (SQLite3 is included with Python, but we ensure it's available)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    sqlite3 \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,8 +26,11 @@ COPY . .
 # Create directories for database and media
 RUN mkdir -p /app/db /app/media
 
-# Expose port
-EXPOSE 8000
+# Collect static files
+RUN python manage.py collectstatic --noinput || true
 
-# Start command (will be overridden by docker-compose)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Expose port (Railway will set PORT env var)
+EXPOSE $PORT
+
+# Start command - use PORT environment variable
+CMD sh -c "gunicorn config.wsgi:application --bind 0.0.0.0:\${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile -"
