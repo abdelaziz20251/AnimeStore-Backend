@@ -45,7 +45,9 @@ def api_root(request):
 def health_check(request):
     """Health check endpoint for Railway monitoring - minimal, no dependencies."""
     # Ultra-simple health check - no database, no timezone, no dependencies
-    return JsonResponse({'status': 'healthy'}, status=200)
+    # Direct HttpResponse to avoid any JSON serialization issues
+    from django.http import HttpResponse
+    return HttpResponse('{"status":"healthy"}', content_type='application/json', status=200)
 
 urlpatterns = [
     # Health Check (must be first for Railway healthcheck)
