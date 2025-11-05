@@ -20,6 +20,7 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
@@ -65,29 +66,19 @@ def api_root(request):
     })
 
 
+@csrf_exempt
 def health_check(request):
-    """Health check endpoint for Railway monitoring - no database required."""
-    try:
-        # Simple health check without database dependency
-        return JsonResponse({
-            'status': 'healthy',
-            'timestamp': str(timezone.now()),
-            'version': '1.0.0',
-            'service': 'e-commerce-api'
-        })
-    except Exception as e:
-        # Return error even if timezone fails
-        return JsonResponse({
-            'status': 'degraded',
-            'error': str(e)
-        }, status=500)
+    """Health check endpoint for Railway monitoring - minimal, no dependencies."""
+    # Ultra-simple health check - no database, no timezone, no dependencies
+    return JsonResponse({'status': 'healthy'}, status=200)
 
 urlpatterns = [
     # Root - API Information
     path('', api_root, name='api-root'),
     
-    # Health Check
+    # Health Check (also try without trailing slash for Railway)
     path('health/', health_check, name='health-check'),
+    path('health', health_check, name='health-check-no-slash'),
     
     # Admin
     path('admin/', admin.site.urls),
