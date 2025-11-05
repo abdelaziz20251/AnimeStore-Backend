@@ -1,7 +1,4 @@
-"""
-Django settings for config project.
-"""
-
+# config/settings.py
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -21,6 +18,41 @@ def str2bool(v: str, default=False) -> bool:
         return default
     return str(v).lower() in ("true", "1", "yes", "y")
 
+def split_and_clean(csv: str) -> list[str]:
+    """
+    Split comma-separated env values and clean:
+    - strip spaces & quotes
+    - remove http/https scheme
+    - strip trailing slashes
+    - drop empty items
+    """
+    if not csv:
+        return []
+    items = []
+    for raw in csv.split(","):
+        val = raw.strip().strip('"').strip("'")
+        if not val:
+            continue
+        val = val.replace("https://", "").replace("http://", "")
+        val = val.rstrip("/")
+        if val:
+            items.append(val)
+    return items
+
+def split_and_clean_origins(csv: str) -> list[str]:
+    """
+    Same as split_and_clean but KEEP scheme (required for CSRF origins),
+    and just strip quotes/whitespace/trailing slashes.
+    """
+    if not csv:
+        return []
+    items = []
+    for raw in csv.split(","):
+        val = raw.strip().strip('"').strip("'").rstrip("/")
+        if val:
+            items.append(val)
+    return items
+
 # -----------------------------------------------------------------------------
 # Core security flags
 # -----------------------------------------------------------------------------
@@ -33,32 +65,22 @@ allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
 railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 
 if allowed_hosts_env:
-    # Clean up host entries - remove protocol and trailing slashes
-    hosts = []
-    for host in allowed_hosts_env.split(","):
-        host = host.strip()
-        if host:
-            # Remove https:// or http:// if present
-            host = host.replace("https://", "").replace("http://", "")
-            # Remove trailing slash
-            host = host.rstrip("/")
-            if host:
-                hosts.append(host)
+    hosts = split_and_clean(allowed_hosts_env)
     ALLOWED_HOSTS = hosts if hosts else ["*"]
 elif railway_domain:
-    # Use Railway's public domain if available
+    # allow exact domain and its subdomains
     ALLOWED_HOSTS = [railway_domain, f".{railway_domain}"]
 elif not DEBUG:
-    # In production without Railway domain, allow all hosts
+    # safe default in production if not provided
     ALLOWED_HOSTS = ["*"]
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
 # CSRF Trusted Origins - include Railway domain if available
 csrf_origins_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_origins_env:
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_env.split(",") if origin.strip()]
+    CSRF_TRUSTED_ORIGINS = split_and_clean_origins(csrf_origins_env)
 elif railway_domain:
-    # Add Railway domain with https
     CSRF_TRUSTED_ORIGINS = [f"https://{railway_domain}"]
 else:
     CSRF_TRUSTED_ORIGINS = []
@@ -71,7 +93,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # -----------------------------------------------------------------------------
 INSTALLED_APPS = [
     "jazzmin",
-    "users.apps.UsersConfig",   # لازم ييجي قبل أي app تاني بيعتمد عليه
+    "users.apps.UsersConfig",   # يجب أن يأتي قبل أي app يعتمد عليه
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -90,7 +112,7 @@ INSTALLED_APPS = [
     "adminpanel.apps.AdminpanelConfig",
 ]
 
-# Jazzmin settings (كما هي من ملفك)
+# Jazzmin (كما هو)
 JAZZMIN_SETTINGS = {
     "site_title": "Dokkan",
     "site_header": "Zoz",
@@ -134,9 +156,9 @@ JAZZMIN_SETTINGS = {
 # Middleware / Templates / WSGI
 # -----------------------------------------------------------------------------
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # يجب أن يكون مبكرًا
+    "corsheaders.middleware.CorsMiddleware",  # مبكرًا
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # لخدمة static في الإنتاج
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # static في الإنتاج
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -170,15 +192,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 #   - محلي: SQLite (افتراضي)
 #   - Production: Postgres (Supabase) لو وفّرت DB_* في Railway
 # -----------------------------------------------------------------------------
-def str2bool(v: str, default=False) -> bool:
-    if v is None:
-        return default
-    return str(v).lower() in ("true", "1", "yes", "y")
-
 USE_DIRECT = str2bool(os.getenv("USE_DIRECT_DB"), default=False)
 
 if os.getenv("DB_HOST"):
-    # Get the correct environment variable key
     if USE_DIRECT:
         DB_HOST = os.getenv("DIRECT_DB_HOST")
         DB_PORT = os.getenv("DIRECT_DB_PORT", "5432")
@@ -273,9 +289,12 @@ SIMPLE_JWT = {
 # -----------------------------------------------------------------------------
 # CORS
 # -----------------------------------------------------------------------------
-# CORS Allowed Origins - clean up URLs (remove trailing slashes)
-cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
-CORS_ALLOWED_ORIGINS = [origin.strip().rstrip("/") for origin in cors_origins_env.split(",") if origin.strip()]
+cors_origins_env = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000"
+)
+# keep scheme, strip quotes/trailing slashes
+CORS_ALLOWED_ORIGINS = split_and_clean_origins(cors_origins_env)
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
