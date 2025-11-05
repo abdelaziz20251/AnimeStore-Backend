@@ -193,7 +193,7 @@ if os.getenv("DB_HOST"):
             "PASSWORD": os.getenv("DB_PASSWORD", ""),
             "HOST": DB_HOST,
             "PORT": DB_PORT,
-            "OPTIONS": {"sslmode": "require"},
+            "OPTIONS": {"sslmode": "require", "connect_timeout": 10},
             "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
         }
     }
