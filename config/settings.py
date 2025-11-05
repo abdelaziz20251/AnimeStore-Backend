@@ -178,8 +178,13 @@ def str2bool(v: str, default=False) -> bool:
 USE_DIRECT = str2bool(os.getenv("USE_DIRECT_DB"), default=False)
 
 if os.getenv("DB_HOST"):
-    DB_HOST = os.getenv("DIRECT_DB_HOST" if USE_DIRECT else "DB_HOST")
-    DB_PORT = os.getenv("DIRECT_DB_PORT" if USE_DIRECT else "DB_PORT", "5432")
+    # Get the correct environment variable key
+    if USE_DIRECT:
+        DB_HOST = os.getenv("DIRECT_DB_HOST")
+        DB_PORT = os.getenv("DIRECT_DB_PORT", "5432")
+    else:
+        DB_HOST = os.getenv("DB_HOST")
+        DB_PORT = os.getenv("DB_PORT", "5432")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
