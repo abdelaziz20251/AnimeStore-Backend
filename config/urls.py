@@ -73,12 +73,12 @@ def health_check(request):
     return JsonResponse({'status': 'healthy'}, status=200)
 
 urlpatterns = [
-    # Root - API Information
-    path('', api_root, name='api-root'),
-    
-    # Health Check (also try without trailing slash for Railway)
+    # Health Check (must be first for Railway healthcheck)
     path('health/', health_check, name='health-check'),
     path('health', health_check, name='health-check-no-slash'),
+    
+    # Root - API Information
+    path('', api_root, name='api-root'),
     
     # Admin
     path('admin/', admin.site.urls),
