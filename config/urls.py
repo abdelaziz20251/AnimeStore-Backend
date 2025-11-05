@@ -25,45 +25,20 @@ from rest_framework import permissions
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 
+@csrf_exempt
 def api_root(request):
-    """Root endpoint that provides API information."""
-    return JsonResponse({
-        'message': 'E-Commerce API',
-        'version': '1.0.0',
-        'status': 'operational',
-        'endpoints': {
-            'admin': '/admin/',
-            'api_docs_swagger': '/api/schema/swagger-ui/',
-            'api_docs_redoc': '/api/schema/redoc/',
-            'users': {
-                'register': '/api/users/register/',
-                'login': '/api/users/login/',
-                'logout': '/api/users/logout/',
-                'me': '/api/users/me/',
-            },
-            'products': {
-                'list': '/api/products/',
-                'detail': '/api/products/{slug}/',
-            },
-            'categories': {
-                'list': '/api/categories/',
-                'detail': '/api/categories/{id}/',
-            },
-            'orders': {
-                'list': '/api/orders/',
-                'detail': '/api/orders/{id}/',
-            },
-            'sellers': {
-                'profile': '/api/sellers/profile/',
-                'products': '/api/sellers/products/',
-            },
-            'analytics': {
-                'dashboard': '/api/analytics/dashboard/',
-            },
-        },
-        'frontend': 'http://localhost:3000',
-        'documentation': 'Visit /api/schema/swagger-ui/ for interactive API documentation',
-    })
+    """Root endpoint that provides API information - CSRF exempt for health checks."""
+    try:
+        return JsonResponse({
+            'message': 'E-Commerce API',
+            'version': '1.0.0',
+            'status': 'operational',
+            'health': '/health/',
+            'docs': '/api/schema/swagger-ui/',
+        })
+    except Exception:
+        # Fallback if anything fails
+        return JsonResponse({'status': 'ok'}, status=200)
 
 
 @csrf_exempt
