@@ -33,13 +33,23 @@ allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
 railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 
 if allowed_hosts_env:
-    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+    # Clean up host entries - remove protocol and trailing slashes
+    hosts = []
+    for host in allowed_hosts_env.split(","):
+        host = host.strip()
+        if host:
+            # Remove https:// or http:// if present
+            host = host.replace("https://", "").replace("http://", "")
+            # Remove trailing slash
+            host = host.rstrip("/")
+            if host:
+                hosts.append(host)
+    ALLOWED_HOSTS = hosts if hosts else ["*"]
 elif railway_domain:
     # Use Railway's public domain if available
     ALLOWED_HOSTS = [railway_domain, f".{railway_domain}"]
 elif not DEBUG:
-    # In production without Railway domain, allow common patterns
-    # Note: Set ALLOWED_HOSTS in Railway env vars for better security
+    # In production without Railway domain, allow all hosts
     ALLOWED_HOSTS = ["*"]
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
@@ -258,10 +268,9 @@ SIMPLE_JWT = {
 # -----------------------------------------------------------------------------
 # CORS
 # -----------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
-).split(",")
+# CORS Allowed Origins - clean up URLs (remove trailing slashes)
+cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+CORS_ALLOWED_ORIGINS = [origin.strip().rstrip("/") for origin in cors_origins_env.split(",") if origin.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
